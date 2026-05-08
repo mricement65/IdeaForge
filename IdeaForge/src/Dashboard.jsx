@@ -1,21 +1,25 @@
 import { useState } from 'react';
 import './Dashboard.css';
 
-/* ─── Sample project data ─── */
-const SAMPLE_PROJECTS = [
-  { id: 1, name: 'Website Redesign',      deadline: '2026-04-15', finished: true,  priority: 'none' },
-  { id: 2, name: 'Mobile App MVP',         deadline: '2026-06-20', finished: false, priority: 'high' },
-  { id: 3, name: 'Brand Identity Kit',     deadline: '2026-03-01', finished: false, priority: 'medium' },
-  { id: 4, name: 'API Integration',        deadline: '2026-07-10', finished: false, priority: 'none' },
-  { id: 5, name: 'Analytics Dashboard',    deadline: '2026-05-01', finished: true,  priority: 'low' },
-  { id: 6, name: 'E-Commerce Platform',    deadline: '2026-08-25', finished: false, priority: 'none' },
-];
-
+/* ─── Priority options ─── */
 const PRIORITY_OPTIONS = [
   { value: 'high',   label: 'High',   color: '#ef4444' },
   { value: 'medium', label: 'Medium', color: '#f59e0b' },
   { value: 'low',    label: 'Low',    color: '#22c55e' },
   { value: 'none',   label: 'None',   color: 'transparent' },
+];
+
+/* ─── Predefined tag palette ─── */
+const TAG_PALETTE = ['Design', 'Dev', 'Marketing', 'Research', 'Content', 'QA', 'Ops', 'Finance'];
+
+/* ─── Sample project data ─── */
+const SAMPLE_PROJECTS = [
+  { id: 1, name: 'Website Redesign',   description: 'Full overhaul of the marketing site with new branding guidelines.', deadline: '2026-04-15', finished: true,  priority: 'none',   tags: ['Design', 'Dev'] },
+  { id: 2, name: 'Mobile App MVP',     description: 'Build the first version of the iOS/Android app.',                  deadline: '2026-06-20', finished: false, priority: 'high',   tags: ['Dev'] },
+  { id: 3, name: 'Brand Identity Kit', description: 'Logo, colors, typography, and brand guidelines document.',          deadline: '2026-03-01', finished: false, priority: 'medium', tags: ['Design', 'Marketing'] },
+  { id: 4, name: 'API Integration',    description: 'Connect third-party APIs for payments and analytics.',              deadline: '2026-07-10', finished: false, priority: 'none',   tags: ['Dev', 'Ops'] },
+  { id: 5, name: 'Analytics Dashboard',description: 'Internal dashboard for tracking user engagement metrics.',          deadline: '2026-05-01', finished: true,  priority: 'low',    tags: ['Dev', 'Research'] },
+  { id: 6, name: 'E-Commerce Platform',description: 'Launch the online store with inventory management.',                deadline: '2026-08-25', finished: false, priority: 'none',   tags: ['Dev', 'Design'] },
 ];
 
 /* ─── Sample calendar events ─── */
@@ -35,9 +39,9 @@ today.setHours(0, 0, 0, 0);
 function getStatus(project) {
   const dl = new Date(project.deadline);
   dl.setHours(0, 0, 0, 0);
-  if (dl < today && project.finished)  return 'done';    // green
-  if (dl < today && !project.finished) return 'overdue';  // red
-  return 'active'; // blue
+  if (dl < today && project.finished)  return 'done';
+  if (dl < today && !project.finished) return 'overdue';
+  return 'active';
 }
 
 const STATUS_LABELS = {
@@ -56,9 +60,16 @@ const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 function getDaysInMonth(year, month) {
   return new Date(year, month + 1, 0).getDate();
 }
-
 function getFirstDayOfMonth(year, month) {
   return new Date(year, month, 1).getDay();
+}
+
+/* ─── Days remaining helper ─── */
+function daysUntil(deadline) {
+  const dl = new Date(deadline);
+  dl.setHours(0, 0, 0, 0);
+  const diff = Math.ceil((dl - today) / (1000 * 60 * 60 * 24));
+  return diff;
 }
 
 /* ====================================================================
@@ -69,37 +80,78 @@ function Dashboard({ onLogout }) {
   const [calMonth, setCalMonth]       = useState(today.getMonth());
   const [calYear, setCalYear]         = useState(today.getFullYear());
   const [calOpen, setCalOpen]         = useState(false);
-  const [createOpen, setCreateOpen]   = useState(false);
-  const [newName, setNewName]         = useState('');
-  const [newDeadline, setNewDeadline] = useState('');
 
-  /* Dropdown & delete-confirm state */
+  /* Create modal state */
+  const [createOpen, setCreateOpen]   = useState(false);
+  const [createStep, setCreateStep]   = useState(1); // 1 = basics, 2 = details
+  const [newName, setNewName]         = useState('');
+  const [newDesc, setNewDesc]         = useState('');
+  const [newDeadline, setNewDeadline] = useState('');
+  const [newPriority, setNewPriority] = useState('none');
+  const [newTags, setNewTags]         = useState([]);
+
+  /* Project detail view */
+  const [selectedProject, setSelectedProject] = useState(null);
+
+  /* Sidebar dropdown state */
   const [menuOpenId, setMenuOpenId]       = useState(null);
   const [prioritySubId, setPrioritySubId] = useState(null);
-  const [deleteConfirm, setDeleteConfirm] = useState(null); // project object or null
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
+  /* ─── Sidebar dropdown handlers ─── */
   const toggleMenu = (id) => {
     setMenuOpenId(menuOpenId === id ? null : id);
     setPrioritySubId(null);
   };
-
   const closeMenu = () => {
     setMenuOpenId(null);
     setPrioritySubId(null);
   };
-
   const handleSetPriority = (projectId, priority) => {
     setProjects(projects.map((p) =>
       p.id === projectId ? { ...p, priority } : p
     ));
     closeMenu();
   };
-
   const handleDeleteProject = () => {
     if (!deleteConfirm) return;
+    if (selectedProject && selectedProject.id === deleteConfirm.id) {
+      setSelectedProject(null);
+    }
     setProjects(projects.filter((p) => p.id !== deleteConfirm.id));
     setDeleteConfirm(null);
     closeMenu();
+  };
+
+  /* ─── Create project handlers ─── */
+  const resetCreateForm = () => {
+    setNewName('');
+    setNewDesc('');
+    setNewDeadline('');
+    setNewPriority('none');
+    setNewTags([]);
+    setCreateStep(1);
+  };
+
+  const openCreateModal = () => {
+    resetCreateForm();
+    setCreateOpen(true);
+  };
+
+  const closeCreateModal = () => {
+    setCreateOpen(false);
+    resetCreateForm();
+  };
+
+  const handleNextStep = () => {
+    if (!newName.trim()) return;
+    setCreateStep(2);
+  };
+
+  const toggleTag = (tag) => {
+    setNewTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
   };
 
   const handleCreateProject = (e) => {
@@ -108,16 +160,17 @@ function Dashboard({ onLogout }) {
     const newProject = {
       id: Date.now(),
       name: newName.trim(),
+      description: newDesc.trim(),
       deadline: newDeadline || new Date().toISOString().split('T')[0],
       finished: false,
-      priority: 'none',
+      priority: newPriority,
+      tags: [...newTags],
     };
     setProjects([newProject, ...projects]);
-    setNewName('');
-    setNewDeadline('');
-    setCreateOpen(false);
+    closeCreateModal();
   };
 
+  /* ─── Calendar navigation ─── */
   const prevMonth = () => {
     if (calMonth === 0) { setCalMonth(11); setCalYear(calYear - 1); }
     else setCalMonth(calMonth - 1);
@@ -127,25 +180,21 @@ function Dashboard({ onLogout }) {
     else setCalMonth(calMonth + 1);
   };
 
-  /* Calendar grid */
+  /* ─── Build calendar grid ─── */
   const daysInMonth  = getDaysInMonth(calYear, calMonth);
   const firstDay     = getFirstDayOfMonth(calYear, calMonth);
   const calendarCells = [];
 
-  // blanks before first day
   for (let i = 0; i < firstDay; i++) {
     calendarCells.push(<div key={`b-${i}`} className="cal-cell cal-blank" />);
   }
 
-  // actual days
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     const isToday =
       d === today.getDate() &&
       calMonth === today.getMonth() &&
       calYear === today.getFullYear();
-
-    // events on this day
     const dayEvents = SAMPLE_EVENTS.filter((ev) => ev.date === dateStr);
 
     calendarCells.push(
@@ -157,12 +206,7 @@ function Dashboard({ onLogout }) {
         {dayEvents.length > 0 && (
           <div className="cal-dots">
             {dayEvents.map((ev) => (
-              <span
-                key={ev.id}
-                className="cal-dot"
-                style={{ background: ev.color }}
-                title={ev.title}
-              />
+              <span key={ev.id} className="cal-dot" style={{ background: ev.color }} title={ev.title} />
             ))}
           </div>
         )}
@@ -170,14 +214,14 @@ function Dashboard({ onLogout }) {
     );
   }
 
-  /* Upcoming events (next 30 days) */
+  /* ─── Upcoming events ─── */
   const upcoming = SAMPLE_EVENTS
-    .filter((ev) => {
-      const d = new Date(ev.date);
-      return d >= today;
-    })
+    .filter((ev) => new Date(ev.date) >= today)
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     .slice(0, 5);
+
+  /* ─── Priority badge helper ─── */
+  const getPriorityInfo = (val) => PRIORITY_OPTIONS.find((p) => p.value === val) || PRIORITY_OPTIONS[3];
 
   return (
     <div className="dashboard" onClick={closeMenu}>
@@ -205,12 +249,13 @@ function Dashboard({ onLogout }) {
           <ul className="project-list">
             {projects.map((proj) => {
               const status = getStatus(proj);
-              const pColor = PRIORITY_OPTIONS.find((p) => p.value === proj.priority)?.color || 'transparent';
+              const pColor = getPriorityInfo(proj.priority).color;
               return (
                 <li
                   key={proj.id}
-                  className="project-item"
+                  className={`project-item${selectedProject?.id === proj.id ? ' project-item-selected' : ''}`}
                   style={{ borderLeft: pColor !== 'transparent' ? `3px solid ${pColor}` : '3px solid transparent' }}
+                  onClick={() => setSelectedProject(proj)}
                 >
                   <span className={`status-dot status-${status}`} title={STATUS_LABELS[status]} />
                   <div className="project-info">
@@ -218,7 +263,6 @@ function Dashboard({ onLogout }) {
                     <span className="project-date">{proj.deadline}</span>
                   </div>
 
-                  {/* Kebab menu button */}
                   <button
                     className="project-menu-btn"
                     onClick={(e) => { e.stopPropagation(); toggleMenu(proj.id); }}
@@ -227,10 +271,8 @@ function Dashboard({ onLogout }) {
                     ⋮
                   </button>
 
-                  {/* Dropdown */}
                   {menuOpenId === proj.id && (
                     <div className="project-dropdown">
-                      {/* Priority option */}
                       <button
                         className="dropdown-item"
                         onClick={(e) => { e.stopPropagation(); setPrioritySubId(prioritySubId === proj.id ? null : proj.id); }}
@@ -240,7 +282,6 @@ function Dashboard({ onLogout }) {
                         <span className="dropdown-arrow">{prioritySubId === proj.id ? '‹' : '›'}</span>
                       </button>
 
-                      {/* Priority sub-menu */}
                       {prioritySubId === proj.id && (
                         <div className="priority-submenu">
                           {PRIORITY_OPTIONS.map((opt) => (
@@ -256,7 +297,6 @@ function Dashboard({ onLogout }) {
                         </div>
                       )}
 
-                      {/* Delete option */}
                       <button
                         className="dropdown-item dropdown-danger"
                         onClick={(e) => { e.stopPropagation(); setDeleteConfirm(proj); closeMenu(); }}
@@ -271,7 +311,6 @@ function Dashboard({ onLogout }) {
             })}
           </ul>
 
-          {/* Legend */}
           <div className="legend">
             <div className="legend-item"><span className="status-dot status-active" /> Active</div>
             <div className="legend-item"><span className="status-dot status-done" /> Completed</div>
@@ -281,28 +320,33 @@ function Dashboard({ onLogout }) {
 
         {/* ─── Main Content ─── */}
         <main className="main-content" id="main-content">
-          {/* Create New Project – centered button */}
-          <div className="create-center">
-            <button
-              className="create-btn"
-              id="create-project-btn"
-              onClick={() => setCreateOpen(true)}
-            >
-              <span className="create-icon">＋</span>
-              Create New Project
-            </button>
-          </div>
+          {/* Show project detail if selected, otherwise show create-project prompt */}
+          {selectedProject ? (
+            <ProjectDetail
+              project={selectedProject}
+              onClose={() => setSelectedProject(null)}
+              getPriorityInfo={getPriorityInfo}
+            />
+          ) : (
+            <div className="create-center">
+              <div className="create-prompt">
+                <div className="create-prompt-icon">📋</div>
+                <h2 className="create-prompt-title">Start a new project</h2>
+                <p className="create-prompt-desc">
+                  Track deadlines, set priorities, and keep your work organized.
+                </p>
+                <button className="create-btn" id="create-project-btn" onClick={openCreateModal}>
+                  <span className="create-icon">＋</span>
+                  Create New Project
+                </button>
+              </div>
+            </div>
+          )}
         </main>
       </div>
 
       {/* ─── Floating Calendar Button ─── */}
-      <button
-        className="cal-fab"
-        id="cal-fab"
-        onClick={() => setCalOpen(true)}
-        aria-label="Open calendar"
-        title="Open calendar"
-      >
+      <button className="cal-fab" id="cal-fab" onClick={() => setCalOpen(true)} aria-label="Open calendar" title="Open calendar">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <rect x="3" y="4" width="18" height="18" rx="2" />
           <line x1="16" y1="2" x2="16" y2="6" />
@@ -333,7 +377,6 @@ function Dashboard({ onLogout }) {
               {calendarCells}
             </div>
 
-            {/* Upcoming inside the panel */}
             {upcoming.length > 0 && (
               <div className="cal-panel-upcoming">
                 <h3 className="cal-panel-upcoming-title">Upcoming Events</h3>
@@ -354,42 +397,153 @@ function Dashboard({ onLogout }) {
         </div>
       )}
 
-      {/* ─── Create Project Modal ─── */}
+      {/* ─── Create Project Modal (multi-step) ─── */}
       {createOpen && (
-        <div className="modal-overlay" onClick={() => setCreateOpen(false)}>
-          <form className="modal-panel" onClick={(e) => e.stopPropagation()} onSubmit={handleCreateProject}>
+        <div className="modal-overlay" onClick={closeCreateModal}>
+          <div className="modal-panel create-modal" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
             <div className="modal-header">
               <h2 className="modal-title">New Project</h2>
-              <button type="button" className="cal-close-btn" onClick={() => setCreateOpen(false)} aria-label="Close">✕</button>
+              <button type="button" className="cal-close-btn" onClick={closeCreateModal} aria-label="Close">✕</button>
             </div>
 
-            <div className="modal-field">
-              <label htmlFor="new-project-name">Project Name</label>
-              <input
-                id="new-project-name"
-                type="text"
-                placeholder="e.g. Landing Page Redesign"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                autoFocus
-                required
-              />
+            {/* Step indicator */}
+            <div className="step-indicator">
+              <div className={`step-dot${createStep >= 1 ? ' step-active' : ''}`}>1</div>
+              <div className="step-line" />
+              <div className={`step-dot${createStep >= 2 ? ' step-active' : ''}`}>2</div>
+            </div>
+            <div className="step-labels">
+              <span className={createStep === 1 ? 'step-label-active' : ''}>Basics</span>
+              <span className={createStep === 2 ? 'step-label-active' : ''}>Details</span>
             </div>
 
-            <div className="modal-field">
-              <label htmlFor="new-project-deadline">Deadline</label>
-              <input
-                id="new-project-deadline"
-                type="date"
-                value={newDeadline}
-                onChange={(e) => setNewDeadline(e.target.value)}
-              />
-            </div>
+            <form onSubmit={handleCreateProject}>
+              {/* Step 1: Basics */}
+              {createStep === 1 && (
+                <div className="create-step">
+                  <div className="modal-field">
+                    <label htmlFor="new-project-name">Project Name *</label>
+                    <input
+                      id="new-project-name"
+                      type="text"
+                      placeholder="e.g. Landing Page Redesign"
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      autoFocus
+                      required
+                    />
+                  </div>
 
-            <button type="submit" className="modal-submit-btn">
-              Add Project
-            </button>
-          </form>
+                  <div className="modal-field">
+                    <label htmlFor="new-project-desc">Description</label>
+                    <textarea
+                      id="new-project-desc"
+                      placeholder="Brief summary of what this project involves…"
+                      value={newDesc}
+                      onChange={(e) => setNewDesc(e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="modal-field">
+                    <label htmlFor="new-project-deadline">Deadline</label>
+                    <input
+                      id="new-project-deadline"
+                      type="date"
+                      value={newDeadline}
+                      onChange={(e) => setNewDeadline(e.target.value)}
+                    />
+                  </div>
+
+                  <button type="button" className="modal-submit-btn" onClick={handleNextStep}>
+                    Next →
+                  </button>
+                </div>
+              )}
+
+              {/* Step 2: Details */}
+              {createStep === 2 && (
+                <div className="create-step">
+                  {/* Priority */}
+                  <div className="modal-field">
+                    <label>Priority</label>
+                    <div className="priority-selector">
+                      {PRIORITY_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          className={`priority-chip${newPriority === opt.value ? ' priority-chip-active' : ''}`}
+                          onClick={() => setNewPriority(opt.value)}
+                        >
+                          <span
+                            className="priority-chip-dot"
+                            style={{ background: opt.color === 'transparent' ? 'var(--border-strong)' : opt.color }}
+                          />
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Tags */}
+                  <div className="modal-field">
+                    <label>Tags</label>
+                    <div className="tag-selector">
+                      {TAG_PALETTE.map((tag) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          className={`tag-chip${newTags.includes(tag) ? ' tag-chip-active' : ''}`}
+                          onClick={() => toggleTag(tag)}
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Summary preview */}
+                  <div className="create-preview">
+                    <h4 className="create-preview-heading">Summary</h4>
+                    <div className="create-preview-row">
+                      <span className="create-preview-label">Name</span>
+                      <span className="create-preview-value">{newName}</span>
+                    </div>
+                    {newDesc && (
+                      <div className="create-preview-row">
+                        <span className="create-preview-label">Description</span>
+                        <span className="create-preview-value create-preview-desc">{newDesc}</span>
+                      </div>
+                    )}
+                    <div className="create-preview-row">
+                      <span className="create-preview-label">Deadline</span>
+                      <span className="create-preview-value">{newDeadline || 'Today'}</span>
+                    </div>
+                    <div className="create-preview-row">
+                      <span className="create-preview-label">Priority</span>
+                      <span className="create-preview-value" style={{ textTransform: 'capitalize' }}>{newPriority}</span>
+                    </div>
+                    {newTags.length > 0 && (
+                      <div className="create-preview-row">
+                        <span className="create-preview-label">Tags</span>
+                        <span className="create-preview-value">{newTags.join(', ')}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="create-step-actions">
+                    <button type="button" className="step-back-btn" onClick={() => setCreateStep(1)}>
+                      ← Back
+                    </button>
+                    <button type="submit" className="modal-submit-btn create-submit">
+                      Create Project
+                    </button>
+                  </div>
+                </div>
+              )}
+            </form>
+          </div>
         </div>
       )}
 
@@ -401,20 +555,91 @@ function Dashboard({ onLogout }) {
               <h2 className="modal-title">Delete Project</h2>
               <button type="button" className="cal-close-btn" onClick={() => setDeleteConfirm(null)} aria-label="Close">✕</button>
             </div>
-
             <p className="delete-confirm-text">
               Are you sure you want to delete <strong>{deleteConfirm.name}</strong>? This action cannot be undone.
             </p>
-
             <div className="delete-confirm-actions">
-              <button className="delete-cancel-btn" onClick={() => setDeleteConfirm(null)}>
-                Cancel
-              </button>
-              <button className="delete-confirm-btn" onClick={handleDeleteProject}>
-                Delete
-              </button>
+              <button className="delete-cancel-btn" onClick={() => setDeleteConfirm(null)}>Cancel</button>
+              <button className="delete-confirm-btn" onClick={handleDeleteProject}>Delete</button>
             </div>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ====================================================================
+   Project Detail View (shown in main content when a project is selected)
+   ==================================================================== */
+function ProjectDetail({ project, onClose, getPriorityInfo }) {
+  const status = getStatus(project);
+  const priority = getPriorityInfo(project.priority);
+  const days = daysUntil(project.deadline);
+
+  let deadlineLabel;
+  if (project.finished) {
+    deadlineLabel = 'Completed';
+  } else if (days < 0) {
+    deadlineLabel = `${Math.abs(days)} days overdue`;
+  } else if (days === 0) {
+    deadlineLabel = 'Due today';
+  } else {
+    deadlineLabel = `${days} days remaining`;
+  }
+
+  return (
+    <div className="project-detail">
+      {/* Header row */}
+      <div className="detail-header">
+        <div className="detail-header-left">
+          <span className={`status-dot status-${status}`} />
+          <h2 className="detail-title">{project.name}</h2>
+        </div>
+        <button className="detail-close-btn" onClick={onClose} aria-label="Close detail">✕</button>
+      </div>
+
+      {/* Meta row */}
+      <div className="detail-meta">
+        <div className="detail-meta-item">
+          <span className="detail-meta-label">Status</span>
+          <span className={`detail-badge detail-badge-${status}`}>{STATUS_LABELS[status]}</span>
+        </div>
+        <div className="detail-meta-item">
+          <span className="detail-meta-label">Priority</span>
+          <span className="detail-badge" style={{
+            background: priority.color !== 'transparent' ? priority.color + '14' : 'var(--bg-tertiary)',
+            color: priority.color !== 'transparent' ? priority.color : 'var(--text-secondary)',
+          }}>
+            {priority.label}
+          </span>
+        </div>
+        <div className="detail-meta-item">
+          <span className="detail-meta-label">Deadline</span>
+          <span className="detail-meta-value">{project.deadline}</span>
+        </div>
+        <div className="detail-meta-item">
+          <span className="detail-meta-label">Time Left</span>
+          <span className={`detail-meta-value ${days < 0 && !project.finished ? 'detail-overdue-text' : ''}`}>
+            {deadlineLabel}
+          </span>
+        </div>
+      </div>
+
+      {/* Tags */}
+      {project.tags && project.tags.length > 0 && (
+        <div className="detail-tags">
+          {project.tags.map((tag) => (
+            <span key={tag} className="detail-tag">{tag}</span>
+          ))}
+        </div>
+      )}
+
+      {/* Description */}
+      {project.description && (
+        <div className="detail-section">
+          <h3 className="detail-section-title">Description</h3>
+          <p className="detail-description">{project.description}</p>
         </div>
       )}
     </div>
