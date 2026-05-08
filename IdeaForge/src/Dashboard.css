@@ -225,21 +225,7 @@
   color: var(--text-muted);
 }
 
-/* ─── Calendar Section ─── */
-.calendar-section {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 22px;
-}
-
-.calendar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 18px;
-}
-
+/* ─── Calendar Title (reused in panel) ─── */
 .calendar-title {
   font-size: 16px;
   font-weight: 600;
@@ -249,7 +235,9 @@
 .calendar-nav {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
+  margin-bottom: 16px;
 }
 
 .cal-nav-btn {
@@ -337,24 +325,112 @@
   border-radius: 50%;
 }
 
-/* ─── Upcoming Events ─── */
-.upcoming-section {
+/* ─── Floating Calendar FAB ─── */
+.cal-fab {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 200;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35);
+  transition: transform 0.2s ease, background 0.15s ease, box-shadow 0.2s ease;
+}
+
+.cal-fab:hover {
+  background: var(--accent-hover);
+  transform: scale(1.08);
+  box-shadow: 0 6px 26px rgba(99, 102, 241, 0.45);
+}
+
+.cal-fab:active {
+  transform: scale(0.96);
+}
+
+/* ─── Calendar Overlay Backdrop ─── */
+.cal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 24px;
+  animation: calFadeIn 0.2s ease;
+}
+
+@keyframes calFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ─── Calendar Panel ─── */
+.cal-panel {
+  width: 400px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
   background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
-  padding: 22px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12);
+  padding: 24px;
+  animation: calSlideUp 0.25s ease;
 }
 
-.upcoming-title {
-  font-size: 16px;
-  font-weight: 600;
+@keyframes calSlideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.cal-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.cal-close-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition), color var(--transition);
+}
+
+.cal-close-btn:hover {
+  background: var(--bg-hover);
   color: var(--text-primary);
-  margin-bottom: 14px;
 }
 
-.upcoming-empty {
+/* ─── Upcoming Events (inside panel) ─── */
+.cal-panel-upcoming {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.cal-panel-upcoming-title {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
   color: var(--text-muted);
-  font-size: 14px;
+  margin-bottom: 12px;
 }
 
 .upcoming-list {
@@ -419,5 +495,16 @@
 
   .main-content {
     padding: 20px 16px;
+  }
+
+  .cal-panel {
+    width: 100%;
+  }
+
+  .cal-fab {
+    bottom: 20px;
+    right: 20px;
+    width: 48px;
+    height: 48px;
   }
 }

@@ -60,6 +60,7 @@ function getFirstDayOfMonth(year, month) {
 function Dashboard({ onLogout }) {
   const [calMonth, setCalMonth] = useState(today.getMonth());
   const [calYear, setCalYear]   = useState(today.getFullYear());
+  const [calOpen, setCalOpen]   = useState(false);
 
   const prevMonth = () => {
     if (calMonth === 0) { setCalMonth(11); setCalYear(calYear - 1); }
@@ -179,15 +180,41 @@ function Dashboard({ onLogout }) {
             <p className="create-hint">Start tracking a new gig or project</p>
           </section>
 
-          {/* Calendar */}
-          <section className="calendar-section">
-            <div className="calendar-header">
-              <h2 className="calendar-title">Calendar</h2>
-              <div className="calendar-nav">
-                <button className="cal-nav-btn" onClick={prevMonth} aria-label="Previous month">‹</button>
-                <span className="cal-month-label">{MONTH_NAMES[calMonth]} {calYear}</span>
-                <button className="cal-nav-btn" onClick={nextMonth} aria-label="Next month">›</button>
-              </div>
+
+
+
+        </main>
+      </div>
+
+      {/* ─── Floating Calendar Button ─── */}
+      <button
+        className="cal-fab"
+        id="cal-fab"
+        onClick={() => setCalOpen(true)}
+        aria-label="Open calendar"
+        title="Open calendar"
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+      </button>
+
+      {/* ─── Calendar Overlay ─── */}
+      {calOpen && (
+        <div className="cal-overlay" onClick={() => setCalOpen(false)}>
+          <div className="cal-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="cal-panel-header">
+              <h2 className="calendar-title">Global Calendar</h2>
+              <button className="cal-close-btn" onClick={() => setCalOpen(false)} aria-label="Close calendar">✕</button>
+            </div>
+
+            <div className="calendar-nav">
+              <button className="cal-nav-btn" onClick={prevMonth} aria-label="Previous month">‹</button>
+              <span className="cal-month-label">{MONTH_NAMES[calMonth]} {calYear}</span>
+              <button className="cal-nav-btn" onClick={nextMonth} aria-label="Next month">›</button>
             </div>
 
             <div className="calendar-grid">
@@ -196,28 +223,27 @@ function Dashboard({ onLogout }) {
               ))}
               {calendarCells}
             </div>
-          </section>
 
-          {/* Upcoming Events */}
-          <section className="upcoming-section">
-            <h2 className="upcoming-title">Upcoming Events</h2>
-            {upcoming.length === 0 && (
-              <p className="upcoming-empty">No upcoming events.</p>
+            {/* Upcoming inside the panel */}
+            {upcoming.length > 0 && (
+              <div className="cal-panel-upcoming">
+                <h3 className="cal-panel-upcoming-title">Upcoming Events</h3>
+                <ul className="upcoming-list">
+                  {upcoming.map((ev) => (
+                    <li key={ev.id} className="upcoming-item">
+                      <span className="upcoming-dot" style={{ background: ev.color }} />
+                      <div className="upcoming-info">
+                        <span className="upcoming-name">{ev.title}</span>
+                        <span className="upcoming-date">{ev.date}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
-            <ul className="upcoming-list">
-              {upcoming.map((ev) => (
-                <li key={ev.id} className="upcoming-item">
-                  <span className="upcoming-dot" style={{ background: ev.color }} />
-                  <div className="upcoming-info">
-                    <span className="upcoming-name">{ev.title}</span>
-                    <span className="upcoming-date">{ev.date}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </section>
-        </main>
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
