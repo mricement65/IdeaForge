@@ -93,6 +93,20 @@ function Dashboard({ onLogout }) {
   /* Project detail view */
   const [selectedProject, setSelectedProject] = useState(null);
 
+  /* Per-project todos & notes (keyed by project id) */
+  const [todosMap, setTodosMap] = useState({});
+  const [notesMap, setNotesMap] = useState({});
+
+  const getProjectTodos = (id) => todosMap[id] || [];
+  const getProjectNotes = (id) => notesMap[id] || '';
+
+  const setProjectTodos = (id, todos) => {
+    setTodosMap((prev) => ({ ...prev, [id]: todos }));
+  };
+  const setProjectNotes = (id, notes) => {
+    setNotesMap((prev) => ({ ...prev, [id]: notes }));
+  };
+
   /* Sidebar dropdown state */
   const [menuOpenId, setMenuOpenId]       = useState(null);
   const [prioritySubId, setPrioritySubId] = useState(null);
@@ -326,6 +340,10 @@ function Dashboard({ onLogout }) {
               project={selectedProject}
               onClose={() => setSelectedProject(null)}
               getPriorityInfo={getPriorityInfo}
+              todos={getProjectTodos(selectedProject.id)}
+              onTodosChange={(todos) => setProjectTodos(selectedProject.id, todos)}
+              notes={getProjectNotes(selectedProject.id)}
+              onNotesChange={(notes) => setProjectNotes(selectedProject.id, notes)}
             />
           ) : (
             <div className="create-center">
@@ -572,10 +590,16 @@ function Dashboard({ onLogout }) {
 /* ====================================================================
    Project Detail View (shown in main content when a project is selected)
    ==================================================================== */
-function ProjectDetail({ project, onClose, getPriorityInfo }) {
+function ProjectDetail({ project, onClose, getPriorityInfo, todos, onTodosChange, notes, onNotesChange }) {
   const status = getStatus(project);
   const priority = getPriorityInfo(project.priority);
   const days = daysUntil(project.deadline);
+
+  /* Local state for adding a new todo */
+  const [newTodo, setNewTodo] = useState('');
+  const [newTodoDeadline, setNewTodoDeadline] = useState('');
+  const [isNotesEditing, setIsNotesEditing] = useState(false);
+  const [notesDraft, setNotesDraft] = useState(notes);
 
   let deadlineLabel;
   if (project.finished) {
@@ -587,6 +611,47 @@ function ProjectDetail({ project, onClose, getPriorityInfo }) {
   } else {
     deadlineLabel = `${days} days remaining`;
   }
+
+  /* ─── Todo handlers ─── */
+  const addTodo = () => {
+    if (!newTodo.trim()) return;
+    const todo = {
+      id: Date.now(),
+      text: newTodo.trim(),
+      deadline: newTodoDeadline || null,
+      done: false,
+    };
+    onTodosChange([...todos, todo]);
+    setNewTodo('');
+    setNewTodoDeadline('');
+  };
+
+  const toggleTodo = (todoId) => {
+    onTodosChange(todos.map((t) => t.id === todoId ? { ...t, done: !t.done } : t));
+  };
+
+  const deleteTodo = (todoId) => {
+    onTodosChange(todos.filter((t) => t.id !== todoId));
+  };
+
+  /* ─── Notes handlers ─── */
+  const startEditingNotes = () => {
+    setNotesDraft(notes);
+    setIsNotesEditing(true);
+  };
+
+  const saveNotes = () => {
+    onNotesChange(notesDraft);
+    setIsNotesEditing(false);
+  };
+
+  const cancelNotes = () => {
+    setNotesDraft(notes);
+    setIsNotesEditing(false);
+  };
+
+  const completedCount = todos.filter((t) => t.done).length;
+  const totalCount = todos.length;
 
   return (
     <div className="project-detail">
@@ -642,6 +707,110 @@ function ProjectDetail({ project, onClose, getPriorityInfo }) {
           <p className="detail-description">{project.description}</p>
         </div>
       )}
+
+      {/* ─── To-Do List ─── */}
+      <div className="detail-section">
+        <div className="detail-section-header">
+          <h3 className="detail-section-title">To-Do List</h3>
+          {totalCount > 0 && (
+            <span className="todo-progress">{completedCount}/{totalCount} done</span>
+          )}
+        </div>
+
+        {/* Progress bar */}
+        {totalCount > 0 && (
+          <div className="todo-progress-bar">
+            <div
+              className="todo-progress-fill"
+              style={{ width: `${(completedCount / totalCount) * 100}%` }}
+            />
+          </div>
+        )}
+
+        {/* Todo items */}
+        <ul className="todo-list">
+          {todos.map((todo) => {
+            const overdue = todo.deadline && !todo.done && new Date(todo.deadline) < today;
+            return (
+              <li key={todo.id} className={`todo-item${todo.done ? ' todo-done' : ''}${overdue ? ' todo-overdue' : ''}`}>
+                <button
+                  className={`todo-checkbox${todo.done ? ' todo-checked' : ''}`}
+                  onClick={() => toggleTodo(todo.id)}
+                  aria-label={todo.done ? 'Mark incomplete' : 'Mark complete'}
+                >
+                  {todo.done && '✓'}
+                </button>
+                <div className="todo-content">
+                  <span className="todo-text">{todo.text}</span>
+                  {todo.deadline && (
+                    <span className={`todo-deadline${overdue ? ' todo-deadline-overdue' : ''}`}>
+                      {overdue ? '⚠ ' : '📅 '}{todo.deadline}
+                    </span>
+                  )}
+                </div>
+                <button className="todo-delete" onClick={() => deleteTodo(todo.id)} aria-label="Delete task">✕</button>
+              </li>
+            );
+          })}
+        </ul>
+
+        {/* Add todo form */}
+        <div className="todo-add">
+          <input
+            className="todo-add-input"
+            type="text"
+            placeholder="Add a task…"
+            value={newTodo}
+            onChange={(e) => setNewTodo(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && addTodo()}
+          />
+          <input
+            className="todo-add-date"
+            type="date"
+            value={newTodoDeadline}
+            onChange={(e) => setNewTodoDeadline(e.target.value)}
+            title="Optional deadline"
+          />
+          <button className="todo-add-btn" onClick={addTodo} disabled={!newTodo.trim()}>Add</button>
+        </div>
+      </div>
+
+      {/* ─── Notes Blackboard ─── */}
+      <div className="detail-section">
+        <div className="detail-section-header">
+          <h3 className="detail-section-title">Notes</h3>
+          {!isNotesEditing && (
+            <button className="notes-edit-btn" onClick={startEditingNotes}>
+              {notes ? 'Edit' : '+ Add Notes'}
+            </button>
+          )}
+        </div>
+
+        {isNotesEditing ? (
+          <div className="notes-editor">
+            <textarea
+              className="notes-textarea"
+              value={notesDraft}
+              onChange={(e) => setNotesDraft(e.target.value)}
+              placeholder="Write your notes here… supports free-form text, ideas, reminders…"
+              rows={8}
+              autoFocus
+            />
+            <div className="notes-actions">
+              <button className="notes-cancel-btn" onClick={cancelNotes}>Cancel</button>
+              <button className="notes-save-btn" onClick={saveNotes}>Save Notes</button>
+            </div>
+          </div>
+        ) : (
+          <div className="notes-blackboard" onClick={startEditingNotes}>
+            {notes ? (
+              <pre className="notes-content">{notes}</pre>
+            ) : (
+              <p className="notes-placeholder">Click to add notes…</p>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -885,6 +885,325 @@
 .detail-section-title { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
 .detail-description { font-size: 14px; color: var(--text-secondary); line-height: 1.65; }
 
+.detail-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.detail-section-header .detail-section-title {
+  margin-bottom: 0;
+}
+
+/* ─── To-Do List ─── */
+.todo-progress {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.todo-progress-bar {
+  height: 4px;
+  background: var(--bg-tertiary);
+  border-radius: 2px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+
+.todo-progress-fill {
+  height: 100%;
+  background: var(--status-done);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.todo-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.todo-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  transition: background var(--transition);
+}
+
+.todo-item:hover {
+  background: var(--bg-hover);
+}
+
+.todo-item.todo-done {
+  opacity: 0.6;
+}
+
+.todo-item.todo-overdue {
+  background: rgba(239, 68, 68, 0.04);
+  border-left: 3px solid var(--status-overdue);
+}
+
+.todo-checkbox {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  border-radius: 4px;
+  border: 2px solid var(--border-strong);
+  background: transparent;
+  color: transparent;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+  transition: all var(--transition);
+}
+
+.todo-checkbox:hover {
+  border-color: var(--accent);
+}
+
+.todo-checkbox.todo-checked {
+  background: var(--status-done);
+  border-color: var(--status-done);
+  color: #fff;
+}
+
+.todo-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.todo-text {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.todo-done .todo-text {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.todo-deadline {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.todo-deadline-overdue {
+  color: var(--status-overdue);
+  font-weight: 500;
+}
+
+.todo-delete {
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--transition), background var(--transition), color var(--transition);
+}
+
+.todo-item:hover .todo-delete {
+  opacity: 1;
+}
+
+.todo-delete:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--status-overdue);
+}
+
+/* Add todo form */
+.todo-add {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.todo-add-input {
+  flex: 1;
+  padding: 9px 12px;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition);
+}
+
+.todo-add-input::placeholder {
+  color: var(--text-muted);
+}
+
+.todo-add-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.todo-add-date {
+  padding: 9px 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  transition: border-color var(--transition);
+}
+
+.todo-add-date:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.todo-add-btn {
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-md);
+  transition: background var(--transition);
+}
+
+.todo-add-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.todo-add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ─── Notes Blackboard ─── */
+.notes-edit-btn {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent);
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition);
+}
+
+.notes-edit-btn:hover {
+  background: var(--accent-light);
+}
+
+.notes-blackboard {
+  min-height: 120px;
+  padding: 18px 20px;
+  background: #1e1e2e;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: box-shadow 0.2s ease;
+}
+
+.notes-blackboard:hover {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.notes-content {
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #cdd6f4;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin: 0;
+}
+
+.notes-placeholder {
+  font-size: 13px;
+  color: #585b70;
+  font-style: italic;
+}
+
+.notes-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.notes-textarea {
+  width: 100%;
+  min-height: 180px;
+  padding: 16px 18px;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #cdd6f4;
+  background: #1e1e2e;
+  border: 2px solid var(--accent);
+  border-radius: var(--radius-md);
+  resize: vertical;
+  transition: border-color var(--transition);
+}
+
+.notes-textarea::placeholder {
+  color: #585b70;
+}
+
+.notes-textarea:focus {
+  outline: none;
+  border-color: var(--accent-hover);
+}
+
+.notes-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.notes-cancel-btn {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  transition: background var(--transition);
+}
+
+.notes-cancel-btn:hover {
+  background: var(--bg-hover);
+}
+
+.notes-save-btn {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-md);
+  transition: background var(--transition);
+}
+
+.notes-save-btn:hover {
+  background: var(--accent-hover);
+}
+
 /* ─── Responsive ─── */
 @media (max-width: 768px) {
   .dashboard-body { flex-direction: column; }
