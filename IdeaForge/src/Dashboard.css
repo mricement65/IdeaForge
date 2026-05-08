@@ -155,6 +155,176 @@
   color: var(--text-muted);
 }
 
+/* ─── Project kebab menu ─── */
+.project-item {
+  position: relative;
+}
+
+.project-menu-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 16px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity var(--transition), background var(--transition), color var(--transition);
+}
+
+.project-item:hover .project-menu-btn {
+  opacity: 1;
+}
+
+.project-menu-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+/* ─── Dropdown menu ─── */
+.project-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 4px;
+  z-index: 150;
+  min-width: 160px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 4px;
+  animation: dropdownFadeIn 0.15s ease;
+}
+
+@keyframes dropdownFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-primary);
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  text-align: left;
+  transition: background var(--transition);
+}
+
+.dropdown-item:hover {
+  background: var(--bg-hover);
+}
+
+.dropdown-icon {
+  font-size: 14px;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.dropdown-arrow {
+  margin-left: auto;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* Danger (delete) */
+.dropdown-danger {
+  color: var(--status-overdue);
+}
+
+.dropdown-danger:hover {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+/* ─── Priority sub-menu ─── */
+.priority-submenu {
+  padding: 2px 0;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 2px;
+}
+
+.priority-option {
+  padding-left: 20px;
+}
+
+.priority-dot {
+  width: 8px;
+  height: 8px;
+  min-width: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.priority-active {
+  background: var(--accent-light);
+  font-weight: 500;
+}
+
+/* ─── Delete Confirmation ─── */
+.delete-confirm-panel {
+  max-width: 380px;
+}
+
+.delete-confirm-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.delete-confirm-text strong {
+  color: var(--text-primary);
+}
+
+.delete-confirm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.delete-cancel-btn {
+  padding: 9px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  transition: background var(--transition), color var(--transition);
+}
+
+.delete-cancel-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.delete-confirm-btn {
+  padding: 9px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--status-overdue);
+  border: none;
+  border-radius: var(--radius-md);
+  transition: background var(--transition);
+}
+
+.delete-confirm-btn:hover {
+  background: #dc2626;
+}
+
 /* Legend */
 .legend {
   display: flex;
@@ -182,36 +352,37 @@
   overflow-y: auto;
 }
 
-/* ─── Create Section ─── */
-.create-section {
-  text-align: center;
-  padding: 36px 24px;
-  background: var(--bg-card);
-  border: 1px dashed var(--border-default);
-  border-radius: var(--radius-lg);
-  transition: border-color var(--transition);
-}
-
-.create-section:hover {
-  border-color: var(--accent);
+/* ─── Create Button (centered in main) ─── */
+.create-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
 }
 
 .create-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 11px 28px;
-  font-size: 14px;
+  padding: 13px 32px;
+  font-size: 15px;
   font-weight: 600;
   color: #fff;
   background: var(--accent);
   border: none;
   border-radius: var(--radius-md);
-  transition: background var(--transition);
+  transition: background var(--transition), transform 0.15s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 12px rgba(99, 102, 241, 0.2);
 }
 
 .create-btn:hover {
   background: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px rgba(99, 102, 241, 0.3);
+}
+
+.create-btn:active {
+  transform: translateY(0);
 }
 
 .create-icon {
@@ -219,10 +390,91 @@
   line-height: 1;
 }
 
-.create-hint {
-  margin-top: 10px;
+/* ─── Modal (Create Project) ─── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: calFadeIn 0.2s ease;
+}
+
+.modal-panel {
+  width: 100%;
+  max-width: 420px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12);
+  padding: 28px;
+  animation: calSlideUp 0.25s ease;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.modal-field {
+  margin-bottom: 18px;
+}
+
+.modal-field label {
+  display: block;
   font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 5px;
+}
+
+.modal-field input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition);
+}
+
+.modal-field input::placeholder {
   color: var(--text-muted);
+}
+
+.modal-field input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.modal-submit-btn {
+  width: 100%;
+  padding: 11px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-md);
+  margin-top: 6px;
+  transition: background var(--transition);
+}
+
+.modal-submit-btn:hover {
+  background: var(--accent-hover);
 }
 
 /* ─── Calendar Title (reused in panel) ─── */

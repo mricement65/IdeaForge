@@ -3,12 +3,19 @@ import './Dashboard.css';
 
 /* ─── Sample project data ─── */
 const SAMPLE_PROJECTS = [
-  { id: 1, name: 'Website Redesign',      deadline: '2026-04-15', finished: true  },
-  { id: 2, name: 'Mobile App MVP',         deadline: '2026-06-20', finished: false },
-  { id: 3, name: 'Brand Identity Kit',     deadline: '2026-03-01', finished: false },
-  { id: 4, name: 'API Integration',        deadline: '2026-07-10', finished: false },
-  { id: 5, name: 'Analytics Dashboard',    deadline: '2026-05-01', finished: true  },
-  { id: 6, name: 'E-Commerce Platform',    deadline: '2026-08-25', finished: false },
+  { id: 1, name: 'Website Redesign',      deadline: '2026-04-15', finished: true,  priority: 'none' },
+  { id: 2, name: 'Mobile App MVP',         deadline: '2026-06-20', finished: false, priority: 'high' },
+  { id: 3, name: 'Brand Identity Kit',     deadline: '2026-03-01', finished: false, priority: 'medium' },
+  { id: 4, name: 'API Integration',        deadline: '2026-07-10', finished: false, priority: 'none' },
+  { id: 5, name: 'Analytics Dashboard',    deadline: '2026-05-01', finished: true,  priority: 'low' },
+  { id: 6, name: 'E-Commerce Platform',    deadline: '2026-08-25', finished: false, priority: 'none' },
+];
+
+const PRIORITY_OPTIONS = [
+  { value: 'high',   label: 'High',   color: '#ef4444' },
+  { value: 'medium', label: 'Medium', color: '#f59e0b' },
+  { value: 'low',    label: 'Low',    color: '#22c55e' },
+  { value: 'none',   label: 'None',   color: 'transparent' },
 ];
 
 /* ─── Sample calendar events ─── */
@@ -58,9 +65,58 @@ function getFirstDayOfMonth(year, month) {
    Dashboard Component
    ==================================================================== */
 function Dashboard({ onLogout }) {
-  const [calMonth, setCalMonth] = useState(today.getMonth());
-  const [calYear, setCalYear]   = useState(today.getFullYear());
-  const [calOpen, setCalOpen]   = useState(false);
+  const [projects, setProjects]       = useState(SAMPLE_PROJECTS);
+  const [calMonth, setCalMonth]       = useState(today.getMonth());
+  const [calYear, setCalYear]         = useState(today.getFullYear());
+  const [calOpen, setCalOpen]         = useState(false);
+  const [createOpen, setCreateOpen]   = useState(false);
+  const [newName, setNewName]         = useState('');
+  const [newDeadline, setNewDeadline] = useState('');
+
+  /* Dropdown & delete-confirm state */
+  const [menuOpenId, setMenuOpenId]       = useState(null);
+  const [prioritySubId, setPrioritySubId] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // project object or null
+
+  const toggleMenu = (id) => {
+    setMenuOpenId(menuOpenId === id ? null : id);
+    setPrioritySubId(null);
+  };
+
+  const closeMenu = () => {
+    setMenuOpenId(null);
+    setPrioritySubId(null);
+  };
+
+  const handleSetPriority = (projectId, priority) => {
+    setProjects(projects.map((p) =>
+      p.id === projectId ? { ...p, priority } : p
+    ));
+    closeMenu();
+  };
+
+  const handleDeleteProject = () => {
+    if (!deleteConfirm) return;
+    setProjects(projects.filter((p) => p.id !== deleteConfirm.id));
+    setDeleteConfirm(null);
+    closeMenu();
+  };
+
+  const handleCreateProject = (e) => {
+    e.preventDefault();
+    if (!newName.trim()) return;
+    const newProject = {
+      id: Date.now(),
+      name: newName.trim(),
+      deadline: newDeadline || new Date().toISOString().split('T')[0],
+      finished: false,
+      priority: 'none',
+    };
+    setProjects([newProject, ...projects]);
+    setNewName('');
+    setNewDeadline('');
+    setCreateOpen(false);
+  };
 
   const prevMonth = () => {
     if (calMonth === 0) { setCalMonth(11); setCalYear(calYear - 1); }
@@ -124,7 +180,7 @@ function Dashboard({ onLogout }) {
     .slice(0, 5);
 
   return (
-    <div className="dashboard">
+    <div className="dashboard" onClick={closeMenu}>
       {/* ─── Navbar ─── */}
       <nav className="navbar" id="navbar">
         <div className="navbar-brand">
@@ -147,15 +203,69 @@ function Dashboard({ onLogout }) {
           <h2 className="sidebar-heading">Projects</h2>
 
           <ul className="project-list">
-            {SAMPLE_PROJECTS.map((proj) => {
+            {projects.map((proj) => {
               const status = getStatus(proj);
+              const pColor = PRIORITY_OPTIONS.find((p) => p.value === proj.priority)?.color || 'transparent';
               return (
-                <li key={proj.id} className="project-item">
+                <li
+                  key={proj.id}
+                  className="project-item"
+                  style={{ borderLeft: pColor !== 'transparent' ? `3px solid ${pColor}` : '3px solid transparent' }}
+                >
                   <span className={`status-dot status-${status}`} title={STATUS_LABELS[status]} />
                   <div className="project-info">
                     <span className="project-name">{proj.name}</span>
                     <span className="project-date">{proj.deadline}</span>
                   </div>
+
+                  {/* Kebab menu button */}
+                  <button
+                    className="project-menu-btn"
+                    onClick={(e) => { e.stopPropagation(); toggleMenu(proj.id); }}
+                    aria-label="Project options"
+                  >
+                    ⋮
+                  </button>
+
+                  {/* Dropdown */}
+                  {menuOpenId === proj.id && (
+                    <div className="project-dropdown">
+                      {/* Priority option */}
+                      <button
+                        className="dropdown-item"
+                        onClick={(e) => { e.stopPropagation(); setPrioritySubId(prioritySubId === proj.id ? null : proj.id); }}
+                      >
+                        <span className="dropdown-icon">⚑</span>
+                        Priority
+                        <span className="dropdown-arrow">{prioritySubId === proj.id ? '‹' : '›'}</span>
+                      </button>
+
+                      {/* Priority sub-menu */}
+                      {prioritySubId === proj.id && (
+                        <div className="priority-submenu">
+                          {PRIORITY_OPTIONS.map((opt) => (
+                            <button
+                              key={opt.value}
+                              className={`dropdown-item priority-option${proj.priority === opt.value ? ' priority-active' : ''}`}
+                              onClick={(e) => { e.stopPropagation(); handleSetPriority(proj.id, opt.value); }}
+                            >
+                              <span className="priority-dot" style={{ background: opt.color === 'transparent' ? 'var(--border-strong)' : opt.color }} />
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Delete option */}
+                      <button
+                        className="dropdown-item dropdown-danger"
+                        onClick={(e) => { e.stopPropagation(); setDeleteConfirm(proj); closeMenu(); }}
+                      >
+                        <span className="dropdown-icon">🗑</span>
+                        Delete
+                      </button>
+                    </div>
+                  )}
                 </li>
               );
             })}
@@ -171,18 +281,17 @@ function Dashboard({ onLogout }) {
 
         {/* ─── Main Content ─── */}
         <main className="main-content" id="main-content">
-          {/* Create New Project */}
-          <section className="create-section">
-            <button className="create-btn" id="create-project-btn">
+          {/* Create New Project – centered button */}
+          <div className="create-center">
+            <button
+              className="create-btn"
+              id="create-project-btn"
+              onClick={() => setCreateOpen(true)}
+            >
               <span className="create-icon">＋</span>
               Create New Project
             </button>
-            <p className="create-hint">Start tracking a new gig or project</p>
-          </section>
-
-
-
-
+          </div>
         </main>
       </div>
 
@@ -241,6 +350,70 @@ function Dashboard({ onLogout }) {
                 </ul>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ─── Create Project Modal ─── */}
+      {createOpen && (
+        <div className="modal-overlay" onClick={() => setCreateOpen(false)}>
+          <form className="modal-panel" onClick={(e) => e.stopPropagation()} onSubmit={handleCreateProject}>
+            <div className="modal-header">
+              <h2 className="modal-title">New Project</h2>
+              <button type="button" className="cal-close-btn" onClick={() => setCreateOpen(false)} aria-label="Close">✕</button>
+            </div>
+
+            <div className="modal-field">
+              <label htmlFor="new-project-name">Project Name</label>
+              <input
+                id="new-project-name"
+                type="text"
+                placeholder="e.g. Landing Page Redesign"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                autoFocus
+                required
+              />
+            </div>
+
+            <div className="modal-field">
+              <label htmlFor="new-project-deadline">Deadline</label>
+              <input
+                id="new-project-deadline"
+                type="date"
+                value={newDeadline}
+                onChange={(e) => setNewDeadline(e.target.value)}
+              />
+            </div>
+
+            <button type="submit" className="modal-submit-btn">
+              Add Project
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* ─── Delete Confirmation Modal ─── */}
+      {deleteConfirm && (
+        <div className="modal-overlay" onClick={() => setDeleteConfirm(null)}>
+          <div className="modal-panel delete-confirm-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">Delete Project</h2>
+              <button type="button" className="cal-close-btn" onClick={() => setDeleteConfirm(null)} aria-label="Close">✕</button>
+            </div>
+
+            <p className="delete-confirm-text">
+              Are you sure you want to delete <strong>{deleteConfirm.name}</strong>? This action cannot be undone.
+            </p>
+
+            <div className="delete-confirm-actions">
+              <button className="delete-cancel-btn" onClick={() => setDeleteConfirm(null)}>
+                Cancel
+              </button>
+              <button className="delete-confirm-btn" onClick={handleDeleteProject}>
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       )}
