@@ -8,29 +8,9 @@ const PRIORITY_OPTIONS = [
   { value: 'none', label: 'None', color: 'transparent' },
 ];
 
-
 const TAG_PALETTE = ['Design', 'Dev', 'Marketing', 'Research', 'Content', 'QA', 'Ops', 'Finance'];
 
-
-const SAMPLE_PROJECTS = [
-  { id: 1, name: 'Website Redesign', description: 'Full overhaul of the marketing site with new branding guidelines.', deadline: '2026-04-15', finished: true, priority: 'none', tags: ['Design', 'Dev'] },
-  { id: 2, name: 'Mobile App MVP', description: 'Build the first version of the iOS/Android app.', deadline: '2026-06-20', finished: false, priority: 'high', tags: ['Dev'] },
-  { id: 3, name: 'Brand Identity Kit', description: 'Logo, colors, typography, and brand guidelines document.', deadline: '2026-03-01', finished: false, priority: 'medium', tags: ['Design', 'Marketing'] },
-  { id: 4, name: 'API Integration', description: 'Connect third-party APIs for payments and analytics.', deadline: '2026-07-10', finished: false, priority: 'none', tags: ['Dev', 'Ops'] },
-  { id: 5, name: 'Analytics Dashboard', description: 'Internal dashboard for tracking user engagement metrics.', deadline: '2026-05-01', finished: true, priority: 'low', tags: ['Dev', 'Research'] },
-  { id: 6, name: 'E-Commerce Platform', description: 'Launch the online store with inventory management.', deadline: '2026-08-25', finished: false, priority: 'none', tags: ['Dev', 'Design'] },
-];
-
-
-const SAMPLE_EVENTS = [
-  { id: 1, title: 'API Integration – Kickoff', date: '2026-05-12', color: 'var(--status-active)' },
-  { id: 2, title: 'Mobile App MVP – Design Review', date: '2026-05-15', color: 'var(--status-active)' },
-  { id: 3, title: 'E-Commerce – Wireframes Due', date: '2026-05-20', color: 'var(--accent)' },
-  { id: 4, title: 'Analytics Dashboard – Delivered', date: '2026-05-01', color: 'var(--status-done)' },
-  { id: 5, title: 'Brand Identity – Deadline Passed', date: '2026-03-01', color: 'var(--status-overdue)' },
-  { id: 6, title: 'Website Redesign – Final Handoff', date: '2026-04-15', color: 'var(--status-done)' },
-];
-
+const PRIORITY_ORDER = { high: 0, medium: 1, low: 2, none: 3 };
 
 const today = new Date();
 today.setHours(0, 0, 0, 0);
@@ -49,7 +29,6 @@ const STATUS_LABELS = {
   overdue: 'Overdue',
 };
 
-
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
@@ -63,7 +42,6 @@ function getFirstDayOfMonth(year, month) {
   return new Date(year, month, 1).getDay();
 }
 
-
 function daysUntil(deadline) {
   const dl = new Date(deadline);
   dl.setHours(0, 0, 0, 0);
@@ -71,26 +49,20 @@ function daysUntil(deadline) {
   return diff;
 }
 
-
 function Dashboard({ onLogout }) {
-  const [projects, setProjects] = useState(SAMPLE_PROJECTS);
+  const [projects, setProjects] = useState([]);
   const [calMonth, setCalMonth] = useState(today.getMonth());
   const [calYear, setCalYear] = useState(today.getFullYear());
   const [calOpen, setCalOpen] = useState(false);
 
-  /* Create modal state */
   const [createOpen, setCreateOpen] = useState(false);
-  const [createStep, setCreateStep] = useState(1); // 1 = basics, 2 = details
+  const [createStep, setCreateStep] = useState(1);
   const [newName, setNewName] = useState('');
   const [newDesc, setNewDesc] = useState('');
   const [newDeadline, setNewDeadline] = useState('');
   const [newPriority, setNewPriority] = useState('none');
   const [newTags, setNewTags] = useState([]);
-
-
   const [selectedProject, setSelectedProject] = useState(null);
-
-
   const [todosMap, setTodosMap] = useState({});
   const [notesMap, setNotesMap] = useState({});
 
@@ -104,11 +76,9 @@ function Dashboard({ onLogout }) {
     setNotesMap((prev) => ({ ...prev, [id]: notes }));
   };
 
-
   const [menuOpenId, setMenuOpenId] = useState(null);
   const [prioritySubId, setPrioritySubId] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-
 
   const toggleMenu = (id) => {
     setMenuOpenId(menuOpenId === id ? null : id);
@@ -133,8 +103,6 @@ function Dashboard({ onLogout }) {
     setDeleteConfirm(null);
     closeMenu();
   };
-
-
   const resetCreateForm = () => {
     setNewName('');
     setNewDesc('');
@@ -181,7 +149,6 @@ function Dashboard({ onLogout }) {
     closeCreateModal();
   };
 
-
   const prevMonth = () => {
     if (calMonth === 0) { setCalMonth(11); setCalYear(calYear - 1); }
     else setCalMonth(calMonth - 1);
@@ -191,6 +158,18 @@ function Dashboard({ onLogout }) {
     else setCalMonth(calMonth + 1);
   };
 
+  const STATUS_COLORS = {
+    active: 'var(--status-active)',
+    done: 'var(--status-done)',
+    overdue: 'var(--status-overdue)',
+  };
+
+  const projectEvents = projects.map((p) => ({
+    id: p.id,
+    title: `${p.name} — Deadline`,
+    date: p.deadline,
+    color: STATUS_COLORS[getStatus(p)],
+  }));
 
   const daysInMonth = getDaysInMonth(calYear, calMonth);
   const firstDay = getFirstDayOfMonth(calYear, calMonth);
@@ -206,7 +185,7 @@ function Dashboard({ onLogout }) {
       d === today.getDate() &&
       calMonth === today.getMonth() &&
       calYear === today.getFullYear();
-    const dayEvents = SAMPLE_EVENTS.filter((ev) => ev.date === dateStr);
+    const dayEvents = projectEvents.filter((ev) => ev.date === dateStr);
 
     calendarCells.push(
       <div
@@ -225,12 +204,10 @@ function Dashboard({ onLogout }) {
     );
   }
 
-
-  const upcoming = SAMPLE_EVENTS
+  const upcoming = projectEvents
     .filter((ev) => new Date(ev.date) >= today)
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     .slice(0, 5);
-
 
   const getPriorityInfo = (val) => PRIORITY_OPTIONS.find((p) => p.value === val) || PRIORITY_OPTIONS[3];
 
@@ -238,7 +215,6 @@ function Dashboard({ onLogout }) {
     <div className="dashboard" onClick={closeMenu}>
       <nav className="navbar" id="navbar">
         <div className="navbar-brand">
-          <div className="navbar-logo-icon">⚡</div>
           <span className="navbar-logo-text">IdeaForge</span>
         </div>
         <div className="navbar-right">
@@ -253,10 +229,18 @@ function Dashboard({ onLogout }) {
 
       <div className="dashboard-body">
         <aside className="sidebar" id="sidebar">
-          <h2 className="sidebar-heading">Projects</h2>
+          <div className="sidebar-header">
+            <h2 className="sidebar-heading">Projects</h2>
+            <button className="sidebar-add-btn" id="sidebar-add-btn" onClick={openCreateModal} title="New project">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+          </div>
 
           <ul className="project-list">
-            {projects.map((proj) => {
+            {[...projects].sort((a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]).map((proj) => {
               const status = getStatus(proj);
               const pColor = getPriorityInfo(proj.priority).color;
               return (
@@ -341,7 +325,7 @@ function Dashboard({ onLogout }) {
           ) : (
             <div className="create-center">
               <div className="create-prompt">
-                <div className="create-prompt-icon">📋</div>
+
                 <h2 className="create-prompt-title">Start a new project</h2>
                 <p className="create-prompt-desc">
                   Track deadlines, set priorities, and keep your work organized.

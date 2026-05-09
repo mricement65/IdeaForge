@@ -15,7 +15,6 @@ function LoginPage({ onLogin }) {
     <div className="login-wrapper">
       <form className="login-card" onSubmit={handleSubmit}>
         <div className="login-logo">
-          <div className="login-logo-icon">⚡</div>
           <span className="login-logo-text">IdeaForge</span>
         </div>
         <p className="login-subtitle">Sign in to your workspace</p>
