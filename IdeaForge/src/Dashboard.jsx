@@ -1,61 +1,60 @@
 import { useState } from 'react';
 import './Dashboard.css';
 
-/* ─── Priority options ─── */
 const PRIORITY_OPTIONS = [
-  { value: 'high',   label: 'High',   color: '#ef4444' },
+  { value: 'high', label: 'High', color: '#ef4444' },
   { value: 'medium', label: 'Medium', color: '#f59e0b' },
-  { value: 'low',    label: 'Low',    color: '#22c55e' },
-  { value: 'none',   label: 'None',   color: 'transparent' },
+  { value: 'low', label: 'Low', color: '#22c55e' },
+  { value: 'none', label: 'None', color: 'transparent' },
 ];
 
-/* ─── Predefined tag palette ─── */
+
 const TAG_PALETTE = ['Design', 'Dev', 'Marketing', 'Research', 'Content', 'QA', 'Ops', 'Finance'];
 
-/* ─── Sample project data ─── */
+
 const SAMPLE_PROJECTS = [
-  { id: 1, name: 'Website Redesign',   description: 'Full overhaul of the marketing site with new branding guidelines.', deadline: '2026-04-15', finished: true,  priority: 'none',   tags: ['Design', 'Dev'] },
-  { id: 2, name: 'Mobile App MVP',     description: 'Build the first version of the iOS/Android app.',                  deadline: '2026-06-20', finished: false, priority: 'high',   tags: ['Dev'] },
-  { id: 3, name: 'Brand Identity Kit', description: 'Logo, colors, typography, and brand guidelines document.',          deadline: '2026-03-01', finished: false, priority: 'medium', tags: ['Design', 'Marketing'] },
-  { id: 4, name: 'API Integration',    description: 'Connect third-party APIs for payments and analytics.',              deadline: '2026-07-10', finished: false, priority: 'none',   tags: ['Dev', 'Ops'] },
-  { id: 5, name: 'Analytics Dashboard',description: 'Internal dashboard for tracking user engagement metrics.',          deadline: '2026-05-01', finished: true,  priority: 'low',    tags: ['Dev', 'Research'] },
-  { id: 6, name: 'E-Commerce Platform',description: 'Launch the online store with inventory management.',                deadline: '2026-08-25', finished: false, priority: 'none',   tags: ['Dev', 'Design'] },
+  { id: 1, name: 'Website Redesign', description: 'Full overhaul of the marketing site with new branding guidelines.', deadline: '2026-04-15', finished: true, priority: 'none', tags: ['Design', 'Dev'] },
+  { id: 2, name: 'Mobile App MVP', description: 'Build the first version of the iOS/Android app.', deadline: '2026-06-20', finished: false, priority: 'high', tags: ['Dev'] },
+  { id: 3, name: 'Brand Identity Kit', description: 'Logo, colors, typography, and brand guidelines document.', deadline: '2026-03-01', finished: false, priority: 'medium', tags: ['Design', 'Marketing'] },
+  { id: 4, name: 'API Integration', description: 'Connect third-party APIs for payments and analytics.', deadline: '2026-07-10', finished: false, priority: 'none', tags: ['Dev', 'Ops'] },
+  { id: 5, name: 'Analytics Dashboard', description: 'Internal dashboard for tracking user engagement metrics.', deadline: '2026-05-01', finished: true, priority: 'low', tags: ['Dev', 'Research'] },
+  { id: 6, name: 'E-Commerce Platform', description: 'Launch the online store with inventory management.', deadline: '2026-08-25', finished: false, priority: 'none', tags: ['Dev', 'Design'] },
 ];
 
-/* ─── Sample calendar events ─── */
+
 const SAMPLE_EVENTS = [
-  { id: 1, title: 'API Integration – Kickoff',      date: '2026-05-12', color: 'var(--status-active)'  },
-  { id: 2, title: 'Mobile App MVP – Design Review',  date: '2026-05-15', color: 'var(--status-active)'  },
-  { id: 3, title: 'E-Commerce – Wireframes Due',      date: '2026-05-20', color: 'var(--accent)'         },
-  { id: 4, title: 'Analytics Dashboard – Delivered',   date: '2026-05-01', color: 'var(--status-done)'    },
+  { id: 1, title: 'API Integration – Kickoff', date: '2026-05-12', color: 'var(--status-active)' },
+  { id: 2, title: 'Mobile App MVP – Design Review', date: '2026-05-15', color: 'var(--status-active)' },
+  { id: 3, title: 'E-Commerce – Wireframes Due', date: '2026-05-20', color: 'var(--accent)' },
+  { id: 4, title: 'Analytics Dashboard – Delivered', date: '2026-05-01', color: 'var(--status-done)' },
   { id: 5, title: 'Brand Identity – Deadline Passed', date: '2026-03-01', color: 'var(--status-overdue)' },
-  { id: 6, title: 'Website Redesign – Final Handoff', date: '2026-04-15', color: 'var(--status-done)'    },
+  { id: 6, title: 'Website Redesign – Final Handoff', date: '2026-04-15', color: 'var(--status-done)' },
 ];
 
-/* ─── Helpers ─── */
+
 const today = new Date();
 today.setHours(0, 0, 0, 0);
 
 function getStatus(project) {
   const dl = new Date(project.deadline);
   dl.setHours(0, 0, 0, 0);
-  if (dl < today && project.finished)  return 'done';
+  if (dl < today && project.finished) return 'done';
   if (dl < today && !project.finished) return 'overdue';
   return 'active';
 }
 
 const STATUS_LABELS = {
-  active:  'Active',
-  done:    'Completed',
+  active: 'Active',
+  done: 'Completed',
   overdue: 'Overdue',
 };
 
-/* ─── Calendar helpers ─── */
+
 const MONTH_NAMES = [
-  'January','February','March','April','May','June',
-  'July','August','September','October','November','December',
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
 ];
-const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 function getDaysInMonth(year, month) {
   return new Date(year, month + 1, 0).getDate();
@@ -64,7 +63,7 @@ function getFirstDayOfMonth(year, month) {
   return new Date(year, month, 1).getDay();
 }
 
-/* ─── Days remaining helper ─── */
+
 function daysUntil(deadline) {
   const dl = new Date(deadline);
   dl.setHours(0, 0, 0, 0);
@@ -72,28 +71,26 @@ function daysUntil(deadline) {
   return diff;
 }
 
-/* ====================================================================
-   Dashboard Component
-   ==================================================================== */
+
 function Dashboard({ onLogout }) {
-  const [projects, setProjects]       = useState(SAMPLE_PROJECTS);
-  const [calMonth, setCalMonth]       = useState(today.getMonth());
-  const [calYear, setCalYear]         = useState(today.getFullYear());
-  const [calOpen, setCalOpen]         = useState(false);
+  const [projects, setProjects] = useState(SAMPLE_PROJECTS);
+  const [calMonth, setCalMonth] = useState(today.getMonth());
+  const [calYear, setCalYear] = useState(today.getFullYear());
+  const [calOpen, setCalOpen] = useState(false);
 
   /* Create modal state */
-  const [createOpen, setCreateOpen]   = useState(false);
-  const [createStep, setCreateStep]   = useState(1); // 1 = basics, 2 = details
-  const [newName, setNewName]         = useState('');
-  const [newDesc, setNewDesc]         = useState('');
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createStep, setCreateStep] = useState(1); // 1 = basics, 2 = details
+  const [newName, setNewName] = useState('');
+  const [newDesc, setNewDesc] = useState('');
   const [newDeadline, setNewDeadline] = useState('');
   const [newPriority, setNewPriority] = useState('none');
-  const [newTags, setNewTags]         = useState([]);
+  const [newTags, setNewTags] = useState([]);
 
-  /* Project detail view */
+
   const [selectedProject, setSelectedProject] = useState(null);
 
-  /* Per-project todos & notes (keyed by project id) */
+
   const [todosMap, setTodosMap] = useState({});
   const [notesMap, setNotesMap] = useState({});
 
@@ -107,12 +104,12 @@ function Dashboard({ onLogout }) {
     setNotesMap((prev) => ({ ...prev, [id]: notes }));
   };
 
-  /* Sidebar dropdown state */
-  const [menuOpenId, setMenuOpenId]       = useState(null);
+
+  const [menuOpenId, setMenuOpenId] = useState(null);
   const [prioritySubId, setPrioritySubId] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
-  /* ─── Sidebar dropdown handlers ─── */
+
   const toggleMenu = (id) => {
     setMenuOpenId(menuOpenId === id ? null : id);
     setPrioritySubId(null);
@@ -137,7 +134,7 @@ function Dashboard({ onLogout }) {
     closeMenu();
   };
 
-  /* ─── Create project handlers ─── */
+
   const resetCreateForm = () => {
     setNewName('');
     setNewDesc('');
@@ -184,7 +181,7 @@ function Dashboard({ onLogout }) {
     closeCreateModal();
   };
 
-  /* ─── Calendar navigation ─── */
+
   const prevMonth = () => {
     if (calMonth === 0) { setCalMonth(11); setCalYear(calYear - 1); }
     else setCalMonth(calMonth - 1);
@@ -194,9 +191,9 @@ function Dashboard({ onLogout }) {
     else setCalMonth(calMonth + 1);
   };
 
-  /* ─── Build calendar grid ─── */
-  const daysInMonth  = getDaysInMonth(calYear, calMonth);
-  const firstDay     = getFirstDayOfMonth(calYear, calMonth);
+
+  const daysInMonth = getDaysInMonth(calYear, calMonth);
+  const firstDay = getFirstDayOfMonth(calYear, calMonth);
   const calendarCells = [];
 
   for (let i = 0; i < firstDay; i++) {
@@ -228,18 +225,17 @@ function Dashboard({ onLogout }) {
     );
   }
 
-  /* ─── Upcoming events ─── */
+
   const upcoming = SAMPLE_EVENTS
     .filter((ev) => new Date(ev.date) >= today)
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     .slice(0, 5);
 
-  /* ─── Priority badge helper ─── */
+
   const getPriorityInfo = (val) => PRIORITY_OPTIONS.find((p) => p.value === val) || PRIORITY_OPTIONS[3];
 
   return (
     <div className="dashboard" onClick={closeMenu}>
-      {/* ─── Navbar ─── */}
       <nav className="navbar" id="navbar">
         <div className="navbar-brand">
           <div className="navbar-logo-icon">⚡</div>
@@ -248,15 +244,14 @@ function Dashboard({ onLogout }) {
         <div className="navbar-right">
           <button className="profile-btn" id="profile-btn" onClick={onLogout} title="Sign out">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="8" r="4"/>
-              <path d="M4 20c0-4 4-6 8-6s8 2 8 6"/>
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
             </svg>
           </button>
         </div>
       </nav>
 
       <div className="dashboard-body">
-        {/* ─── Sidebar ─── */}
         <aside className="sidebar" id="sidebar">
           <h2 className="sidebar-heading">Projects</h2>
 
@@ -332,9 +327,7 @@ function Dashboard({ onLogout }) {
           </div>
         </aside>
 
-        {/* ─── Main Content ─── */}
         <main className="main-content" id="main-content">
-          {/* Show project detail if selected, otherwise show create-project prompt */}
           {selectedProject ? (
             <ProjectDetail
               project={selectedProject}
@@ -363,7 +356,6 @@ function Dashboard({ onLogout }) {
         </main>
       </div>
 
-      {/* ─── Floating Calendar Button ─── */}
       <button className="cal-fab" id="cal-fab" onClick={() => setCalOpen(true)} aria-label="Open calendar" title="Open calendar">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <rect x="3" y="4" width="18" height="18" rx="2" />
@@ -373,7 +365,6 @@ function Dashboard({ onLogout }) {
         </svg>
       </button>
 
-      {/* ─── Calendar Overlay ─── */}
       {calOpen && (
         <div className="cal-overlay" onClick={() => setCalOpen(false)}>
           <div className="cal-panel" onClick={(e) => e.stopPropagation()}>
@@ -415,17 +406,14 @@ function Dashboard({ onLogout }) {
         </div>
       )}
 
-      {/* ─── Create Project Modal (multi-step) ─── */}
       {createOpen && (
         <div className="modal-overlay" onClick={closeCreateModal}>
           <div className="modal-panel create-modal" onClick={(e) => e.stopPropagation()}>
-            {/* Header */}
             <div className="modal-header">
               <h2 className="modal-title">New Project</h2>
               <button type="button" className="cal-close-btn" onClick={closeCreateModal} aria-label="Close">✕</button>
             </div>
 
-            {/* Step indicator */}
             <div className="step-indicator">
               <div className={`step-dot${createStep >= 1 ? ' step-active' : ''}`}>1</div>
               <div className="step-line" />
@@ -437,7 +425,6 @@ function Dashboard({ onLogout }) {
             </div>
 
             <form onSubmit={handleCreateProject}>
-              {/* Step 1: Basics */}
               {createStep === 1 && (
                 <div className="create-step">
                   <div className="modal-field">
@@ -480,10 +467,8 @@ function Dashboard({ onLogout }) {
                 </div>
               )}
 
-              {/* Step 2: Details */}
               {createStep === 2 && (
                 <div className="create-step">
-                  {/* Priority */}
                   <div className="modal-field">
                     <label>Priority</label>
                     <div className="priority-selector">
@@ -504,7 +489,6 @@ function Dashboard({ onLogout }) {
                     </div>
                   </div>
 
-                  {/* Tags */}
                   <div className="modal-field">
                     <label>Tags</label>
                     <div className="tag-selector">
@@ -521,7 +505,6 @@ function Dashboard({ onLogout }) {
                     </div>
                   </div>
 
-                  {/* Summary preview */}
                   <div className="create-preview">
                     <h4 className="create-preview-heading">Summary</h4>
                     <div className="create-preview-row">
@@ -565,7 +548,6 @@ function Dashboard({ onLogout }) {
         </div>
       )}
 
-      {/* ─── Delete Confirmation Modal ─── */}
       {deleteConfirm && (
         <div className="modal-overlay" onClick={() => setDeleteConfirm(null)}>
           <div className="modal-panel delete-confirm-panel" onClick={(e) => e.stopPropagation()}>
@@ -587,15 +569,11 @@ function Dashboard({ onLogout }) {
   );
 }
 
-/* ====================================================================
-   Project Detail View (shown in main content when a project is selected)
-   ==================================================================== */
 function ProjectDetail({ project, onClose, getPriorityInfo, todos, onTodosChange, notes, onNotesChange }) {
   const status = getStatus(project);
   const priority = getPriorityInfo(project.priority);
   const days = daysUntil(project.deadline);
 
-  /* Local state for adding a new todo */
   const [newTodo, setNewTodo] = useState('');
   const [newTodoDeadline, setNewTodoDeadline] = useState('');
   const [isNotesEditing, setIsNotesEditing] = useState(false);
@@ -612,7 +590,6 @@ function ProjectDetail({ project, onClose, getPriorityInfo, todos, onTodosChange
     deadlineLabel = `${days} days remaining`;
   }
 
-  /* ─── Todo handlers ─── */
   const addTodo = () => {
     if (!newTodo.trim()) return;
     const todo = {
@@ -634,7 +611,6 @@ function ProjectDetail({ project, onClose, getPriorityInfo, todos, onTodosChange
     onTodosChange(todos.filter((t) => t.id !== todoId));
   };
 
-  /* ─── Notes handlers ─── */
   const startEditingNotes = () => {
     setNotesDraft(notes);
     setIsNotesEditing(true);
@@ -655,7 +631,6 @@ function ProjectDetail({ project, onClose, getPriorityInfo, todos, onTodosChange
 
   return (
     <div className="project-detail">
-      {/* Header row */}
       <div className="detail-header">
         <div className="detail-header-left">
           <span className={`status-dot status-${status}`} />
@@ -664,7 +639,6 @@ function ProjectDetail({ project, onClose, getPriorityInfo, todos, onTodosChange
         <button className="detail-close-btn" onClick={onClose} aria-label="Close detail">✕</button>
       </div>
 
-      {/* Meta row */}
       <div className="detail-meta">
         <div className="detail-meta-item">
           <span className="detail-meta-label">Status</span>
@@ -691,7 +665,6 @@ function ProjectDetail({ project, onClose, getPriorityInfo, todos, onTodosChange
         </div>
       </div>
 
-      {/* Tags */}
       {project.tags && project.tags.length > 0 && (
         <div className="detail-tags">
           {project.tags.map((tag) => (
@@ -700,7 +673,6 @@ function ProjectDetail({ project, onClose, getPriorityInfo, todos, onTodosChange
         </div>
       )}
 
-      {/* Description */}
       {project.description && (
         <div className="detail-section">
           <h3 className="detail-section-title">Description</h3>
@@ -708,7 +680,6 @@ function ProjectDetail({ project, onClose, getPriorityInfo, todos, onTodosChange
         </div>
       )}
 
-      {/* ─── To-Do List ─── */}
       <div className="detail-section">
         <div className="detail-section-header">
           <h3 className="detail-section-title">To-Do List</h3>
@@ -717,7 +688,6 @@ function ProjectDetail({ project, onClose, getPriorityInfo, todos, onTodosChange
           )}
         </div>
 
-        {/* Progress bar */}
         {totalCount > 0 && (
           <div className="todo-progress-bar">
             <div
@@ -727,7 +697,6 @@ function ProjectDetail({ project, onClose, getPriorityInfo, todos, onTodosChange
           </div>
         )}
 
-        {/* Todo items */}
         <ul className="todo-list">
           {todos.map((todo) => {
             const overdue = todo.deadline && !todo.done && new Date(todo.deadline) < today;
@@ -754,7 +723,6 @@ function ProjectDetail({ project, onClose, getPriorityInfo, todos, onTodosChange
           })}
         </ul>
 
-        {/* Add todo form */}
         <div className="todo-add">
           <input
             className="todo-add-input"
@@ -775,7 +743,6 @@ function ProjectDetail({ project, onClose, getPriorityInfo, todos, onTodosChange
         </div>
       </div>
 
-      {/* ─── Notes Blackboard ─── */}
       <div className="detail-section">
         <div className="detail-section-header">
           <h3 className="detail-section-title">Notes</h3>

@@ -7,21 +7,19 @@ function LoginPage({ onLogin }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // No real auth – just transition to Dashboard
+
     onLogin();
   };
 
   return (
     <div className="login-wrapper">
       <form className="login-card" onSubmit={handleSubmit}>
-        {/* Branding */}
         <div className="login-logo">
           <div className="login-logo-icon">⚡</div>
           <span className="login-logo-text">IdeaForge</span>
         </div>
         <p className="login-subtitle">Sign in to your workspace</p>
 
-        {/* Email */}
         <div className="login-field">
           <label htmlFor="login-email">Email</label>
           <input
@@ -34,7 +32,6 @@ function LoginPage({ onLogin }) {
           />
         </div>
 
-        {/* Password */}
         <div className="login-field">
           <label htmlFor="login-password">Password</label>
           <input
@@ -47,12 +44,10 @@ function LoginPage({ onLogin }) {
           />
         </div>
 
-        {/* Submit */}
         <button type="submit" className="login-btn">
           Sign In
         </button>
 
-        {/* Extra links */}
         <div className="login-extras">
           <a href="#forgot">Forgot password?</a>
           <span>
